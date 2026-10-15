@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GifExpress · Grave a tela e transforme em GIF</title>
+<meta name="description" content="Extensão para Google Chrome que grava uma aba, uma área ou a tela inteira e transforma em GIF, com editor de linha do tempo. / Chrome extension that records your screen and turns it into a GIF.">
+<!-- O ícone da extensão (icons/brand-matrix-small.svg). -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2310233f'/%3E%3Cg fill='%2378b6ff'%3E%3Crect x='4.4' y='2' width='1.9' height='1.9'/%3E%3Crect x='6.8' y='2' width='1.9' height='1.9'/%3E%3Crect x='9.2' y='2' width='1.9' height='1.9'/%3E%3Crect x='2' y='4.4' width='1.9' height='1.9'/%3E%3Crect x='2' y='6.8' width='1.9' height='1.9'/%3E%3Crect x='6.8' y='6.8' width='1.9' height='1.9'/%3E%3Crect x='9.2' y='6.8' width='1.9' height='1.9'/%3E%3Crect x='11.6' y='6.8' width='1.9' height='1.9'/%3E%3Crect x='2' y='9.2' width='1.9' height='1.9'/%3E%3Crect x='11.6' y='9.2' width='1.9' height='1.9'/%3E%3Crect x='4.4' y='11.6' width='1.9' height='1.9'/%3E%3Crect x='6.8' y='11.6' width='1.9' height='1.9'/%3E%3Crect x='9.2' y='11.6' width='1.9' height='1.9'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f6f8fb; --paper: #ffffff; --text: #14213a; --muted: #56627a; --accent: #2f6fd6;
+    --line: #dde4ef; --soft: #eef3fa; --on-accent: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0c1626; --paper: #12203a; --text: #e5ecf7; --muted: #9aaac4; --accent: #78b6ff;
+            --line: #23324d; --soft: #15243f; --on-accent: #0c1626; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 880px; margin: 0 auto; padding: 24px 16px 64px; }
+  a { color: var(--accent); }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
+  .logo { width: 36px; height: 36px; flex: none; display: block; }
+  .top nav { display: flex; gap: 14px; font-size: 14px; }
+  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.12; margin: 40px 0 12px; text-wrap: balance; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; margin: 0 0 12px; text-wrap: balance; }
+  h3 { font-size: 16px; margin: 0 0 4px; }
+  .lead { font-size: 18px; color: var(--muted); max-width: 62ch; margin: 0; }
+  .soon { display: inline-block; margin-top: 20px; font-weight: 600; padding: 10px 18px; border-radius: 10px;
+          background: var(--soft); color: var(--muted); border: 1px solid var(--line); }
+  section { margin-top: 56px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; padding: 0; margin: 0; list-style: none; }
+  .steps li { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .steps b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+             background: var(--accent); color: var(--on-accent); font-size: 13px; margin-bottom: 8px; }
+  .steps p, .plan p, .plan li, .info p { color: var(--muted); margin: 0; }
+  .plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .plan { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 10px; align-content: start; }
+  .plan.pro { border: 2px solid var(--accent); }
+  .price { font-size: 28px; font-weight: 700; color: var(--text); }
+  .price small { font-size: 15px; font-weight: 500; color: var(--muted); }
+  .plan ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+  .info { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .info div { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  .lang { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line); }
+  footer { margin-top: 56px; font-size: 14px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+  p, li { overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <a class="brand" href="./"><svg class="logo" viewBox="0 0 16 16" aria-hidden="true"><rect width="16" height="16" rx="3" fill="#10233f"/><g fill="#78b6ff"><rect x="4.4" y="2" width="1.9" height="1.9"/><rect x="6.8" y="2" width="1.9" height="1.9"/><rect x="9.2" y="2" width="1.9" height="1.9"/><rect x="2" y="4.4" width="1.9" height="1.9"/><rect x="2" y="6.8" width="1.9" height="1.9"/><rect x="6.8" y="6.8" width="1.9" height="1.9"/><rect x="9.2" y="6.8" width="1.9" height="1.9"/><rect x="11.6" y="6.8" width="1.9" height="1.9"/><rect x="2" y="9.2" width="1.9" height="1.9"/><rect x="11.6" y="9.2" width="1.9" height="1.9"/><rect x="4.4" y="11.6" width="1.9" height="1.9"/><rect x="6.8" y="11.6" width="1.9" height="1.9"/><rect x="9.2" y="11.6" width="1.9" height="1.9"/></g></svg>GifExpress</a>
+    <nav aria-label="Links">
+      <a href="privacidade.html">Privacidade</a>
+      <a href="#en" lang="en">English</a>
+    </nav>
+  </div>
+
+  <!-- ───────────────────────────── PORTUGUÊS ───────────────────────────── -->
+  <div lang="pt-BR">
+    <h1>Grave a tela. Saia com um GIF.</h1>
+    <p class="lead">O GifExpress é uma extensão para Google Chrome que grava uma aba, uma área da página ou a tela inteira e transforma a gravação em GIF, com editor de linha do tempo e marcações. A conversão acontece no seu computador.</p>
+    <span class="soon">Em breve na Chrome Web Store</span>
+
+    <section>
+      <h2>Como funciona</h2>
+      <ol class="steps">
+        <li><b>1</b><h3>Escolha o que gravar</h3><p>A aba atual, uma área dela ou a tela inteira.</p></li>
+        <li><b>2</b><h3>Grave e pare</h3><p>Pelo popup ou pelos atalhos de teclado, com pausa no meio.</p></li>
+        <li><b>3</b><h3>Ajuste e baixe</h3><p>Corte trechos, adicione setas, textos e desfoque, e baixe o GIF.</p></li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>Planos</h2>
+      <div class="plans">
+        <div class="plan">
+          <h3>Gratuito</h3>
+          <div class="price">R$ 0</div>
+          <p>Para GIFs rápidos do dia a dia.</p>
+          <ul>
+            <li>GIFs de até 10 segundos, até 10 quadros por segundo</li>
+            <li>Tamanhos de 480 e 720 px</li>
+            <li>Seta, retângulo, círculo, contador, texto, desfoque e pixelização</li>
+            <li>Aparar, dividir e excluir trechos</li>
+            <li>Recentes guardados por 7 dias</li>
+          </ul>
+        </div>
+        <div class="plan pro">
+          <h3>Pro</h3>
+          <div class="price">R$ 89 <small>por ano</small></div>
+          <p>Tudo do gratuito, mais:</p>
+          <ul>
+            <li>GIFs de até 30 segundos, até 15 quadros por segundo</li>
+            <li>Resolução original da tela e tamanhos maiores</li>
+            <li>Lupa, caneta, marca-texto, balão e imagem</li>
+            <li>Trechos de outros GIFs, pausas e recorte da imagem</li>
+            <li>Projetos editáveis (.gifexpress) e Recentes por até 30 dias</li>
+            <li>Uso em até 2 navegadores</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Assinatura e cancelamento</h2>
+      <div class="info">
+        <div>
+          <h3>Assinar</h3>
+          <p>Pela própria extensão: setinha do botão de gravar → GifExpress Pro → Assinar. O pagamento é anual e processado pela Stripe, e o Pro é liberado assim que o pagamento é confirmado.</p>
+        </div>
+        <div>
+          <h3>Gerenciar ou cancelar</h3>
+          <p>No mesmo lugar, em Gerenciar assinatura, com o e-mail usado na compra, você vê faturas, troca o cartão ou cancela. O cancelamento vale no fim do período pago: o Pro continua até lá e a renovação não é cobrada.</p>
+        </div>
+        <div>
+          <h3>Seus GIFs</h3>
+          <p>Nada é apagado quando a assinatura termina. Os GIFs já gerados continuam seus; os recursos Pro voltam ao renovar.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Privacidade</h2>
+      <div class="info">
+        <div>
+          <h3>Tudo no seu computador</h3>
+          <p>As gravações, os GIFs e os projetos ficam no seu navegador. Nada do que você grava é enviado a nós.</p>
+        </div>
+        <div>
+          <h3>Sem rastreamento</h3>
+          <p>Sem anúncios e sem analytics. Veja a <a href="privacidade.html">política de privacidade</a>.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ───────────────────────────── ENGLISH ───────────────────────────── -->
+  <div class="lang" id="en" lang="en">
+    <h2>GifExpress in English</h2>
+    <p class="lead">A Google Chrome extension that records a tab, an area of the page or your whole screen and turns it into a GIF, with a timeline editor and markup tools. Conversion happens on your computer.</p>
+    <span class="soon">Coming soon to the Chrome Web Store</span>
+
+    <section>
+      <div class="plans">
+        <div class="plan">
+          <h3>Free</h3>
+          <div class="price">R$ 0</div>
+          <ul>
+            <li>GIFs up to 10 seconds, up to 10 frames per second</li>
+            <li>480 and 720 px sizes</li>
+            <li>Arrow, rectangle, circle, counter, text, blur and pixelate</li>
+            <li>Trim, split and delete clips</li>
+            <li>Recents kept for 7 days</li>
+          </ul>
+        </div>
+        <div class="plan pro">
+          <h3>Pro</h3>
+          <div class="price">R$ 89 <small>per year</small></div>
+          <p>Everything in Free, plus:</p>
+          <ul>
+            <li>GIFs up to 30 seconds, up to 15 frames per second</li>
+            <li>The screen's original resolution and larger sizes</li>
+            <li>Magnifier, pen, highlighter, balloon and image</li>
+            <li>Clips from other GIFs, pauses and image crop</li>
+            <li>Editable projects (.gifexpress) and Recents for up to 30 days</li>
+            <li>Use in up to 2 browsers</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="info">
+        <div>
+          <h3>Subscribe</h3>
+          <p>From the extension: the record button's arrow → GifExpress Pro → Subscribe. Billing is yearly and processed by Stripe.</p>
+        </div>
+        <div>
+          <h3>Manage or cancel</h3>
+          <p>In Manage subscription, using your purchase e-mail, you can see invoices, update your card or cancel. Cancellation takes effect at the end of the paid period.</p>
+        </div>
+        <div>
+          <h3>Privacy</h3>
+          <p>Your recordings and GIFs stay in your browser; no ads, no tracking. See the <a href="privacidade.html#en">privacy policy</a>.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>GifExpress</span>
+    <a href="privacidade.html">Política de privacidade · Privacy policy</a>
+  </footer>
+</main>
+</body>
+</html>
